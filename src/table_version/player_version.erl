@@ -8,12 +8,12 @@
 cur_version() -> 1.
 
 version(1) ->
-    [{player, string},
-    {version, int, 2}, 
-    {id, int, 8}, 
-    {name, string}, 
-    {items, list}, 
-    {float_test, float}, 
-    {lv, int, 2}];
+    [{player, "", string},
+    {version, 1, int, 2}, 
+    {id, 0, int, 8}, 
+    {name, "", string}, 
+    {items, [], list}, 
+    {float_test, 0, float}, 
+    {lv, 1, int, 2}];
 version(V) ->
     throw({version_error, V}).

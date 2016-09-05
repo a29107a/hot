@@ -3,6 +3,7 @@
 -export([
     test1/0,
     test/0,
+    upgrade/1,
     pack/1,
     unpack/1
 ]).
@@ -37,6 +38,39 @@ test() ->
     unpack(Bin).
     %io:format("unpack ~p~n", [unpack(Bin)]).
 
+upgrade(In) when is_tuple(In) ->
+    TblName = element(1, In),
+    TblVersion = element(2, In),
+    NameList = atom_to_list(TblName),
+    TblAtom = list_to_atom(NameList ++ "_version"),
+    TblInfo = TblAtom:version(TblVersion),
+    CurVersion = TblAtom:cur_version(),
+    CurTblInfo = TblAtom:version(CurVersion),
+    {NewData, _} = lists:foldl(fun({Atom, Default, _, _}, {Ret, Count}) ->
+        if
+            Count == 1 ->
+                {erlang:append_element(Ret, Atom), Count + 1};
+            Count == 2 ->
+                {erlang:append_element(Ret, CurVersion), Count + 1};
+            true ->
+                {IsOld, Index} = lists:foldl(fun({A, _, _, _}, {F, C}) ->
+                    case {F, A == Atom} of
+                        {true, _} -> {true, C};
+                        {false, true} -> {true, C};
+                        {false, false} -> {false, C + 1}
+                    end
+                end, {false, 1}, TblInfo),
+                case IsOld of
+                    true -> 
+                        {erlang:append_element(Ret, Default), Count + 1};
+                    _ -> 
+                        {erlang:append_element(Ret, element(Index, TblInfo)), Count + 1}
+                end
+        end
+    end, {{}, 1}, CurTblInfo),
+    NewData;
+upgrade(_) -> error.    
+
 pack(In) when is_tuple(In) ->
     TblName = element(1, In),
     TblVersion = element(2, In),
@@ -66,7 +100,7 @@ inner_unpack(Out, TblInfo, Bin, Index) ->
             inner_unpack(erlang:append_element(Out, Ret), TblInfo, Rest, Index + 1)
     end.
 
-unpack_data(Bin, {_, int, Count}) ->
+unpack_data(Bin, {_, _, int, Count}) ->
     case Count of
         1 ->
             <<Ret:?INT8, Rest/binary>> = Bin,
@@ -82,11 +116,11 @@ unpack_data(Bin, {_, int, Count}) ->
             {Ret, Rest};
         _ -> throw({error_unpack_data_int, Count})
     end;
-unpack_data(<<Ret:?FLOAT, Rest/binary>>, {_, float}) ->
+unpack_data(<<Ret:?FLOAT, Rest/binary>>, {_, _, float}) ->
     {Ret, Rest};
-unpack_data(Bin, {_, string}) ->
+unpack_data(Bin, {_, _, string}) ->
     unpack_string(Bin);
-unpack_data(<<Len:?INT16, Rest/binary>>, {_, list}) ->
+unpack_data(<<Len:?INT16, Rest/binary>>, {_, _, list}) ->
     {Out, Rest2} = lists:foldl(fun(_, {In, Bin}) ->
         {Data, Rest1} = unpack(Bin),
         {[Data | In], Rest1}
@@ -104,7 +138,7 @@ inner_pack(Bin, TblInfo, In, Index) ->
             inner_pack(<<Bin/binary, PackBin/binary>>, TblInfo, In, Index + 1)
     end.
 
-pack_data(Data, {_Name, int, Count}) ->
+pack_data(Data, {_Name, _, int, Count}) ->
     case Count of
         1 -> <<Data:?INT8>>;
         2 -> <<Data:?INT16>>;
@@ -112,11 +146,11 @@ pack_data(Data, {_Name, int, Count}) ->
         8 -> <<Data:?INT64>>;
         _ -> throw({error_pack_data_int, Count})
     end;
-pack_data(Data, {_Name, float}) ->
+pack_data(Data, {_Name, _, float}) ->
     <<Data:?FLOAT>>;
-pack_data(Data, {_Name, string}) ->
+pack_data(Data, {_Name, _, string}) ->
     pack_string(Data);
-pack_data(Data, {_Name, list}) ->
+pack_data(Data, {_Name, _, list}) ->
     Len = length(Data),
     DataBin = list_to_binary(lists:map(fun pack/1, Data)),
     <<Len:?INT16, DataBin/binary>>;

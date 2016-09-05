@@ -8,7 +8,10 @@
 cur_version() -> 1.
 
 version(1) ->
-    [{item, string}, {version, int, 1}, {id, int, 2}, {count, int, 2}];
+    [{item, "", string}, 
+    {version, 1, int, 1}, 
+    {id, 1, int, 2}, 
+    {count, 0, int, 2}];
 
 version(V) ->
     throw({version_error, V}).
