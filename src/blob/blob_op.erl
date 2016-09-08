@@ -61,7 +61,7 @@ upgrade(In) when is_tuple(In) ->
                     end
                 end, {false, 1}, TblInfo),
                 case IsOld of
-                    true -> 
+                    false -> 
                         {erlang:append_element(Ret, Default), Count + 1};
                     _ -> 
                         {erlang:append_element(Ret, element(Index, TblInfo)), Count + 1}
