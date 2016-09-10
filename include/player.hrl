@@ -4,5 +4,6 @@
     name = <<""/utf8>>,
     items = [],
     float_test = 0.0,
+    test = 0.0,
     lv = 1
 }).

@@ -1,42 +1,12 @@
 -module(blob_op).
 
 -export([
-    test1/0,
-    test/0,
     upgrade/1,
     pack/1,
     unpack/1
 ]).
 
 -include("data_type.hrl").
-
-test1() ->
-    TimeBegin = now(),
-    io:format("begin time ~p~n", [TimeBegin]),
-    lists:foreach(fun(_) ->
-        test()
-    end, lists:seq(1, 10000)),
-    TimeEnd = now(),
-    io:format("end time ~p~n", [TimeEnd]).
-
-test() ->
-    Name = <<"地地中"/utf8>>,
-    Player = {player,1,1,binary_to_list(Name),
-            [{item,1,1,1},
-            {item,1,2,2},
-            {item,1,3,3},
-            {item,1,4,4},
-            {item,1,5,5},
-            {item,1,6,6},
-            {item,1,7,7},
-            {item,1,8,8},
-            {item,1,9,9},
-            {item,1,10,10}],
-            1.33,3},
-    %io:format("player ~p~n", [Player]),
-    Bin = pack(Player),
-    unpack(Bin).
-    %io:format("unpack ~p~n", [unpack(Bin)]).
 
 upgrade(In) when is_tuple(In) ->
     TblName = element(1, In),
@@ -46,7 +16,7 @@ upgrade(In) when is_tuple(In) ->
     TblInfo = TblAtom:version(TblVersion),
     CurVersion = TblAtom:cur_version(),
     CurTblInfo = TblAtom:version(CurVersion),
-    {NewData, _} = lists:foldl(fun({Atom, Default, _, _}, {Ret, Count}) ->
+    {NewData, _} = lists:foldl(fun({Atom, Default, Type, _}, {Ret, Count}) ->
         if
             Count == 1 ->
                 {erlang:append_element(Ret, Atom), Count + 1};
@@ -64,7 +34,13 @@ upgrade(In) when is_tuple(In) ->
                     false -> 
                         {erlang:append_element(Ret, Default), Count + 1};
                     _ -> 
-                        {erlang:append_element(Ret, element(Index, TblInfo)), Count + 1}
+                        Data = element(Index, In),
+                        NewData = case Type of
+                            list ->
+                                [upgrade(D) || D <- Data];
+                            _ -> Data
+                        end,
+                        {erlang:append_element(Ret, NewData), Count + 1}
                 end
         end
     end, {{}, 1}, CurTblInfo),
@@ -116,11 +92,11 @@ unpack_data(Bin, {_, _, int, Count}) ->
             {Ret, Rest};
         _ -> throw({error_unpack_data_int, Count})
     end;
-unpack_data(<<Ret:?FLOAT, Rest/binary>>, {_, _, float}) ->
+unpack_data(<<Ret:?FLOAT, Rest/binary>>, {_, _, float, _}) ->
     {Ret, Rest};
-unpack_data(Bin, {_, _, string}) ->
+unpack_data(Bin, {_, _, string, _}) ->
     unpack_string(Bin);
-unpack_data(<<Len:?INT16, Rest/binary>>, {_, _, list}) ->
+unpack_data(<<Len:?INT16, Rest/binary>>, {_, _, list, _}) ->
     {Out, Rest2} = lists:foldl(fun(_, {In, Bin}) ->
         {Data, Rest1} = unpack(Bin),
         {[Data | In], Rest1}
@@ -146,11 +122,11 @@ pack_data(Data, {_Name, _, int, Count}) ->
         8 -> <<Data:?INT64>>;
         _ -> throw({error_pack_data_int, Count})
     end;
-pack_data(Data, {_Name, _, float}) ->
+pack_data(Data, {_Name, _, float, _}) ->
     <<Data:?FLOAT>>;
-pack_data(Data, {_Name, _, string}) ->
+pack_data(Data, {_Name, _, string, _}) ->
     pack_string(Data);
-pack_data(Data, {_Name, _, list}) ->
+pack_data(Data, {_Name, _, list, _}) ->
     Len = length(Data),
     DataBin = list_to_binary(lists:map(fun pack/1, Data)),
     <<Len:?INT16, DataBin/binary>>;
