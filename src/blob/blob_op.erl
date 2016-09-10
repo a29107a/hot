@@ -1,12 +1,34 @@
 -module(blob_op).
 
 -export([
+    check_version/1,
     upgrade/1,
     pack/1,
     unpack/1
 ]).
 
 -include("data_type.hrl").
+
+check_version(Dir) ->
+    {ok, Files} = file:list_dir(Dir),
+    lists:foreach(fun(F) ->
+        [Name, _] = string:tokens(F, "."),
+        Atom = list_to_atom(Name),
+        Version = Atom:cur_version(),
+        TblInfo = Atom:version(Version),
+        lists:foreach(
+            fun({_, _, string, _}) ->
+                ok;
+               ({_, _, int, _}) ->
+                ok;
+               ({_, _, list, _}) -> 
+                ok;
+               ({_, _, float, _}) -> 
+                ok;
+               (Type) ->
+                throw({check_error, {TblInfo, Type}})
+            end, TblInfo)
+    end, Files).
 
 upgrade(In) when is_tuple(In) ->
     TblName = element(1, In),
