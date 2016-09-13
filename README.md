@@ -2,7 +2,7 @@
 erlang game server frame
 
 # how to compile
-rebar get-deps
+rebar get-deps  
 rebar compile
 
 # how to start
@@ -21,4 +21,10 @@ the param maybe :
 6.debug  
     debug server when server start no console  
 7.other  
-    show the help how to use   
+    tell you how to use   
+
+so,when you want start server,you can :  
+bash ./sh/test_node/server start
+
+however,you can also copy several test_node to start mutli server.  
+the dir in sh/ maybe is test_node1,test_node2...
