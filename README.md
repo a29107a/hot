@@ -6,9 +6,9 @@ rebar get-deps
 rebar compile
 
 # how to start
-bash ./sh/test_node/server param
-the param maybe :
-1.start
+bash ./sh/test_node/server param  
+the param maybe :  
+1.start  
     start server no console  
 2.live  
     start server have console  
