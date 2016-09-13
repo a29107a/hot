@@ -24,7 +24,8 @@ help()
     echo "./$0 live"
     echo "./$0 stop"
     echo "./$0 backup"
-    echo "./$0 backup"
+    echo "./$0 reload"
+    echo "./$0 debug"
 }
 case $1 in
     'start') 
