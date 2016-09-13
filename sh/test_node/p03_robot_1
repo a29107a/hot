@@ -1,0 +1,12 @@
+#!/bin/sh
+. `dirname $0`/robot_env
+
+#$(basename `cd $SCRIPT_DIR; pwd`)@127.0.0.1 \
+
+exec ${ERL_DIR}erl \
+    -pa $SERVER_EBIN_ROOT \
+    -name $SCRIPT_NAME@127.0.0.1 \
+    -boot start_clean \
+    -s reloader \
+    -s robot \
+    -extra --accname $SCRIPT_NAME --server_ip $ServerIP --port $Port

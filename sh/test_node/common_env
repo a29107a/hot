@@ -1,0 +1,17 @@
+# -*- mode: bash -*-
+#!/bin/bash
+# not support link, please use real file path
+SCRIPT_DIR=$(cd ${0%/*} && pwd) # 执行脚本所在目录
+SCRIPT_NAME=${0##*/} # 可以用来做工具的节点名
+SERVER_HOME=${SCRIPT_DIR%/*/*} # 项目的根目录
+
+IP='apple.m109'
+
+
+EBIN_ROOT="${SERVER_HOME}/ebin ${SERVER_HOME}/deps/*/ebin"
+EBIN_ARGS="-pa $EBIN_ROOT"
+
+
+
+
+

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+SCRIPT_DIR=$(cd ${0%/*} && pwd)
+SCRIPT_NAME=${0##*/}
+SERVER_HOME=${SCRIPT_DIR%/*/*}
+SERVER_EBIN_ROOT="${SERVER_HOME}/ebin ${SERVER_HOME}/deps/*/ebin"
+ERL_DIR=
+
+## 可以修改服务器和端口，文件名就是robot的账户
+ServerIP=127.0.0.1
+#ServerIP=192.168.1.149
+Port=5801
