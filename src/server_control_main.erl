@@ -2,7 +2,6 @@
 
 -export([start/0]).
 
--include("common.hrl").
 -define(RPC_TIMEOUT, infinity).
 
 commands_desc() ->
