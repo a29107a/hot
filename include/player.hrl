@@ -1,5 +1,5 @@
 -record(player, {
-    version = player_table:cur_version(),
+    version = player_version:cur_version(),
     id = 0,
     name = <<""/utf8>>,
     items = [],
