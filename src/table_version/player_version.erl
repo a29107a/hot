@@ -21,6 +21,9 @@ version(2) ->
     {id, 0, int, 8}, 
     {name, "", string, 0}, 
     {items, [], list, 0}, 
+    {float_test, 0, float, 0},
+    {base_attr, {}, record, 0},
+    {test, 0, float, 0},
     {lv, 1, int, 2}];
 
 version(V) ->

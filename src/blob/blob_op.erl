@@ -25,6 +25,8 @@ check_version(Dir) ->
                 ok;
                ({_, _, float, _}) -> 
                 ok;
+               ({_, _, record, _}) ->
+                ok;
                (Type) ->
                 throw({check_error, {TblInfo, Type}})
             end, TblInfo)
@@ -60,6 +62,8 @@ upgrade(In) when is_tuple(In) ->
                         NewData = case Type of
                             list ->
                                 [upgrade(D) || D <- Data];
+                            record ->
+                                upgrade(Data);
                             _ -> Data
                         end,
                         {erlang:append_element(Ret, NewData), Count + 1}
@@ -124,6 +128,8 @@ unpack_data(<<Len:?INT16, Rest/binary>>, {_, _, list, _}) ->
         {[Data | In], Rest1}
     end, {[], Rest}, lists:seq(1, Len)),
     {lists:reverse(Out), Rest2};
+unpack_data(<<Rest/binary>>, {_, _, record, _}) ->
+    unpack(Rest);
 unpack_data(_, Type) -> throw({error_type_blob_op, Type}).
 
 inner_pack(Bin, TblInfo, In, Index) ->
@@ -152,6 +158,9 @@ pack_data(Data, {_Name, _, list, _}) ->
     Len = length(Data),
     DataBin = list_to_binary(lists:map(fun pack/1, Data)),
     <<Len:?INT16, DataBin/binary>>;
+pack_data(Data, {_Name, _, record, _}) ->
+    DataBin = pack(Data),
+    <<DataBin/binary>>;
 pack_data(_, Type) -> throw({error_type_blob_op, Type}).
 
 pack_string(Str) when is_list(Str) ->
