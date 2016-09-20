@@ -1,5 +1,7 @@
 -module(player_version).
 
+-include("base_attr.hrl").
+
 -export([
     cur_version/0,
     version/1
@@ -22,7 +24,7 @@ version(2) ->
     {name, "", string, 0}, 
     {items, [], list, 0}, 
     {float_test, 0, float, 0},
-    {base_attr, {}, record, 0},
+    {base_attr, #base_attr{}, record, base_attr},
     {test, 0, float, 0},
     {lv, 1, int, 2}];
 

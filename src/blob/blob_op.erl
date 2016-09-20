@@ -1,7 +1,8 @@
 -module(blob_op).
 
 -export([
-    check_version/1,
+    check_single/1,
+    check_mul/1,
     upgrade/1,
     pack/1,
     unpack/1
@@ -9,28 +10,44 @@
 
 -include("data_type.hrl").
 
-check_version(Dir) ->
+check_mul(Dir) ->
     {ok, Files} = file:list_dir(Dir),
     lists:foreach(fun(F) ->
         [Name, _] = string:tokens(F, "."),
-        Atom = list_to_atom(Name),
-        Version = Atom:cur_version(),
-        TblInfo = Atom:version(Version),
-        lists:foreach(
-            fun({_, _, string, _}) ->
-                ok;
-               ({_, _, int, _}) ->
-                ok;
-               ({_, _, list, _}) -> 
-                ok;
-               ({_, _, float, _}) -> 
-                ok;
-               ({_, _, record, _}) ->
-                ok;
-               (Type) ->
-                throw({check_error, {TblInfo, Type}})
-            end, TblInfo)
+        inner_check(list_to_atom(Name))
     end, Files).
+
+check_single(Name) when is_list(Name) ->
+    inner_check(list_to_atom(Name));
+check_single(Atom) when is_atom(Atom) ->
+    inner_check(Atom).
+
+inner_check(Atom) ->
+    Version = Atom:cur_version(),
+    TblInfo = Atom:version(Version),
+    lists:foreach(
+        fun({_, _, string, _}) ->
+            ok;
+           ({_, _, int, Count}) ->
+            case Count of
+                1 -> ok;
+                2 -> ok;
+                4 -> ok;
+                8 -> ok;
+                _ -> throw({check_int_error, {TblInfo, Count}})
+            end;
+           ({_, _, list, _}) -> 
+            ok;
+           ({_, _, float, _}) -> 
+            ok;
+           ({_, Data, record, RecordAtom}) ->
+            case RecordAtom == element(1, Data) of
+                false -> throw({check_record_error, {TblInfo, Atom}});
+                true -> ok
+            end;
+           (Type) ->
+            throw({check_error, {TblInfo, Type}})
+        end, TblInfo).
 
 upgrade(In) when is_tuple(In) ->
     TblName = element(1, In),
