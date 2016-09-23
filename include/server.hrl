@@ -1,0 +1,3 @@
+-define(PLAYER_STOP_NORMAL, 1).         %% 玩家正常退出
+-define(PLAYER_STOP_KICK_OUT, 2).       %% 被踢    
+-define(PLAYER_STOP_LOGIN_OTHER, 3).    %% 其它地方登录
