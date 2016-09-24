@@ -97,13 +97,13 @@ pack(In) when is_tuple(In) ->
     TblAtom = list_to_atom(NameList ++ "_version"),
     TblInfo = TblAtom:version(TblVersion),
     %length(TblInfo) == tuple_size(In),
-    NameBin = pack_string(NameList),
+    NameBin = pack_bin:pack_string(NameList),
     inner_pack(<<NameBin/binary, TblVersion:?INT16>>, TblInfo, In, 3);
 pack(_) ->
     error.
 
 unpack(In) ->
-    {TblName, Rest} = unpack_string(In),
+    {TblName, Rest} = pack_bin:unpack_string(In),
     TblAtom = list_to_atom(TblName ++ "_version"),
     <<Version:?INT16, Rest1/binary>>= Rest,
     TblInfo = TblAtom:version(Version),
@@ -138,7 +138,7 @@ unpack_data(Bin, {_, _, int, Count}) ->
 unpack_data(<<Ret:?FLOAT, Rest/binary>>, {_, _, float, _}) ->
     {Ret, Rest};
 unpack_data(Bin, {_, _, string, _}) ->
-    unpack_string(Bin);
+    pack_bin:unpack_string(Bin);
 unpack_data(<<Len:?INT16, Rest/binary>>, {_, _, list, _}) ->
     {Out, Rest2} = lists:foldl(fun(_, {In, Bin}) ->
         {Data, Rest1} = unpack(Bin),
@@ -170,7 +170,7 @@ pack_data(Data, {_Name, _, int, Count}) ->
 pack_data(Data, {_Name, _, float, _}) ->
     <<Data:?FLOAT>>;
 pack_data(Data, {_Name, _, string, _}) ->
-    pack_string(Data);
+    pack_bin:pack_string(Data);
 pack_data(Data, {_Name, _, list, _}) ->
     Len = length(Data),
     DataBin = list_to_binary(lists:map(fun pack/1, Data)),
@@ -179,24 +179,3 @@ pack_data(Data, {_Name, _, record, _}) ->
     DataBin = pack(Data),
     <<DataBin/binary>>;
 pack_data(_, Type) -> throw({error_type_blob_op, Type}).
-
-pack_string(Str) when is_list(Str) ->
-    Bin = list_to_binary(Str),
-    Len = size(Bin),
-    case Len > 0 of
-        false -> <<0:?INT16>>;
-        true ->
-            <<Len:?INT16, Bin/binary>>
-    end;
-pack_string(_) -> <<0:?INT16>>.
-
-unpack_string(Bin) ->
-    case Bin of
-        <<Len:?INT16, Bin1/binary>> ->
-            case Bin1 of
-                <<Str:Len/binary-unit:8, Rest/binary>> ->
-                    {binary_to_list(Str), Rest};
-                _ -> {[], <<>>}
-            end;
-        _ -> {[], <<>>}
-    end.
